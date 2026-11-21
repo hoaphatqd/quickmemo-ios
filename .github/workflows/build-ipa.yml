@@ -1,0 +1,51 @@
+name: Build Unsigned IPA (Sideloadly / AltStore)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-ipa:
+    runs-on: macos-14
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project & Build IPA
+        run: |
+          if [ -f "ios/project.yml" ]; then
+            cd ios
+          fi
+          xcodegen generate
+
+          xcodebuild clean build-for-testing \
+            -project OneTapStealth.xcodeproj \
+            -scheme TouchRunnerUITests \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+          mkdir -p Payload
+          cp -r build/Build/Products/Release-iphoneos/OneTapStealth.app Payload/
+          zip -qry "$GITHUB_WORKSPACE/QuickMemo-OneTapStealth.ipa" Payload
+          rm -rf Payload
+
+          if [ -d "build/Build/Products/Release-iphoneos/TouchRunnerUITests-Runner.app" ]; then
+            mkdir -p Payload
+            cp -r build/Build/Products/Release-iphoneos/TouchRunnerUITests-Runner.app Payload/
+            zip -qry "$GITHUB_WORKSPACE/QuickMemo-TouchRunner.ipa" Payload
+            rm -rf Payload
+          fi
+
+      - name: Upload IPA Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuickMemo-Stealth-IPAs
+          path: "*.ipa"
