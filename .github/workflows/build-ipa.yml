@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-ipa:
-    runs-on: macos-14
+    runs-on: macos-latest
     steps:
       - name: Checkout Source
         uses: actions/checkout@v4
@@ -22,9 +22,9 @@ jobs:
           fi
           xcodegen generate
 
-          xcodebuild clean build-for-testing \
+          xcodebuild clean build \
             -project OneTapStealth.xcodeproj \
-            -scheme TouchRunnerUITests \
+            -scheme OneTapStealth \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath build \
@@ -36,6 +36,16 @@ jobs:
           cp -r build/Build/Products/Release-iphoneos/OneTapStealth.app Payload/
           zip -qry "$GITHUB_WORKSPACE/QuickMemo-OneTapStealth.ipa" Payload
           rm -rf Payload
+
+          xcodebuild build-for-testing \
+            -project OneTapStealth.xcodeproj \
+            -scheme TouchRunnerUITests \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO || true
 
           if [ -d "build/Build/Products/Release-iphoneos/TouchRunnerUITests-Runner.app" ]; then
             mkdir -p Payload
