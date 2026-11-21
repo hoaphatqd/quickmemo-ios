@@ -1,0 +1,71 @@
+name: OneTapStealth
+options:
+  bundleIdPrefix: com.apple.utility
+  deploymentTarget:
+    iOS: "15.0"
+  xcodeVersion: "15.0"
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    TARGETED_DEVICE_FAMILY: "1" # iPhone only
+    ENABLE_BITCODE: NO
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  OneTapStealth:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+    info:
+      path: Sources/App/Info.plist
+      properties:
+        CFBundleDisplayName: "QuickMemo"
+        CFBundleName: "QuickMemo"
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIBackgroundModes:
+          - audio
+        # Chỉ cho phép kết nối loopback 127.0.0.1 nội bộ để giao tiếp với On-Device Touch Runner
+        # Không mở bất kỳ URL Scheme nào để các app khác không thể quét canOpenURL()
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: false
+          NSAllowsLocalNetworking: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.personal.quickmemo.utility
+        INFOPLIST_FILE: Sources/App/Info.plist
+
+  TouchRunnerUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: TouchRunnerUITests
+    dependencies:
+      - target: OneTapStealth
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.personal.quickmemo.utility.runner
+        TEST_TARGET_NAME: OneTapStealth
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  OneTapStealth:
+    build:
+      targets:
+        OneTapStealth: all
+  TouchRunnerUITests:
+    build:
+      targets:
+        OneTapStealth: all
+        TouchRunnerUITests: [test, run]
+    test:
+      targets:
+        - TouchRunnerUITests
